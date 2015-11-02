@@ -5,13 +5,12 @@ use warnings;
 use Path::Class;
 use autodie; # die if problem reading or writing a file
 use File::Find;
-use File::Copy;
 
 my $databasedir = '/var/lib/mysql/masterdb';
 
 my $dir = dir("/root");
 
-opendir(DIR, $databasedir) or die $!;
+my @dots;
 
 my $file = $dir->file("tmp.txt");
 
@@ -22,25 +21,23 @@ my $content = $file->slurp();
 my $file_handle = $file->openr();
 
 # Read in line at a time
-while( my $line = $file_handle->getline() ) {
-       print $line;
-
-my @dots 
-        = grep { 
-            /$line.*/           # Begins with a period
-	    && -f "$databasedir/$_"   # and is a file
-	} readdir(DIR);
-
-    # Loop through the array printing out the filenames
-    foreach my $file (@dots) {
+while( my $line = $file_handle->getline() ) 
+{
+       # print $line;
+        chomp $line;
+        opendir(DIR, $databasedir) or die $!;
+	@dots = grep (/$line.*/, readdir(DIR));
+	closedir(DIR);	    
+	# Loop through the array printing out the filenames
+	#print join(", ", @dots);
+	foreach my $filehandler (@dots) 
+	{
 	    #Move it to a different directory 
-	    move("/var/lib/mysql/masterdb/$file","/mnt/cc_delete/$file");
-        print "$file\n";
-    }   
+	    move("/var/lib/mysql/masterdb/$filehandler","/mnt/cc_delete/$filehandler");
+	    #print "$filehandler\n";
+	}   
        
 }
 
-
-
-    closedir(DIR);
+   
     exit 0;
